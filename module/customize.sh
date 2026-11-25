@@ -52,12 +52,19 @@ framework_dir="$ext_dir/framework"
 ui_print "- Verifying the original OPlus-signed IR Remote APK"
 mkdir -p "$native_dir" "$permissions_dir" "$framework_dir" ||
   abort "! Could not create module directories."
-unzip -p "$ZIPFILE" payload/ConsumerIRApp.apk > "$apk_path" ||
-  abort "! Could not extract ConsumerIRApp.apk."
+if [ "$(unzip -p "$ZIPFILE" apk.source 2>/dev/null)" = external ]; then
+  source_apk=/data/media/0/Download/ConsumerIRApp.apk
+  [ -f "$source_apk" ] ||
+    abort "! Put the stock ConsumerIRApp.apk in the owner's internal storage Download folder."
+  cp "$source_apk" "$apk_path" || abort "! Could not read the APK from Download."
+else
+  unzip -p "$ZIPFILE" payload/ConsumerIRApp.apk > "$apk_path" ||
+    abort "! Could not extract ConsumerIRApp.apk."
+fi
 expected_hash=$(unzip -p "$ZIPFILE" apk.sha256) || abort "! The APK checksum is missing."
 actual_hash=$(sha256sum "$apk_path") || abort "! Could not hash the APK."
 [ "${actual_hash%% *}" = "$expected_hash" ] ||
-  abort "! The packaged APK failed its checksum."
+  abort "! The APK must be IR Remote 17.0.35 from ColorOS CPH2747_17.0.1.201."
 
 ui_print "- Staging the app, ARM64 libraries, and Sidecar compatibility class"
 unzip -oj "$apk_path" 'lib/arm64-v8a/*.so' -d "$native_dir" ||

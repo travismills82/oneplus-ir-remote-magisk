@@ -51,7 +51,10 @@ def package(output, apk, d8, android_jar):
                          "androidx.window.sidecar.xml", "sidecar.sha256"):
                 write_entry(archive, name, (MODULE / name).read_bytes())
             write_entry(archive, "apk.sha256", (ROOT / "source-apk.sha256").read_bytes())
-            write_entry(archive, "payload/ConsumerIRApp.apk", apk, ZIP_STORED)
+            if apk is None:
+                write_entry(archive, "apk.source", b"external\n")
+            else:
+                write_entry(archive, "payload/ConsumerIRApp.apk", apk, ZIP_STORED)
             write_entry(archive, "payload/coloros-ir-compat.jar", compat, ZIP_STORED)
         module_zip.replace(output)
 
@@ -63,13 +66,17 @@ def package(output, apk, d8, android_jar):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("apk", type=Path, help="original ConsumerIRApp.apk from ColorOS")
+    parser.add_argument("apk", type=Path, nargs="?", help="original ConsumerIRApp.apk from ColorOS")
     parser.add_argument("output", type=Path, help="destination module ZIP")
+    parser.add_argument("--external-apk", action="store_true",
+                        help="use ConsumerIRApp.apk from the phone's Download folder at install time")
     parser.add_argument("--sdk", type=Path, default=os.getenv("ANDROID_HOME"))
     parser.add_argument("--build-tools", default="36.1.0", help="SDK build-tools version")
     args = parser.parse_args()
 
-    if args.output.suffix != ".zip" or args.output.resolve() == args.apk.resolve():
+    if args.external_apk == (args.apk is not None):
+        parser.error("provide either the original APK or --external-apk")
+    if args.output.suffix != ".zip" or (args.apk and args.output.resolve() == args.apk.resolve()):
         parser.error("output must be a different file with a .zip extension")
     if args.sdk is None:
         parser.error("set ANDROID_HOME or pass --sdk")
@@ -81,10 +88,12 @@ def main():
             parser.error(f"missing {path}")
 
     try:
-        apk = args.apk.read_bytes()
-        expected = (ROOT / "source-apk.sha256").read_text().strip()
-        if hashlib.sha256(apk).hexdigest() != expected:
-            parser.error("APK must be IR Remote 17.0.35 from CPH2747_17.0.1.201")
+        apk = None
+        if args.apk:
+            apk = args.apk.read_bytes()
+            expected = (ROOT / "source-apk.sha256").read_text().strip()
+            if hashlib.sha256(apk).hexdigest() != expected:
+                parser.error("APK must be IR Remote 17.0.35 from CPH2747_17.0.1.201")
         package(args.output, apk, d8, android_jar)
     except (OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"Build failed: {error}\n")
