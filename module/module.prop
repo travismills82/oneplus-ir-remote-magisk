@@ -1,0 +1,6 @@
+id=oneplus_ir_remote
+name=ColorOS IR Remote
+version=v1.0.0
+versionCode=100
+author=Travis Mills
+description=Ports ColorOS IR Remote 17.0.35 to compatible ROMs with a working Android Consumer IR blaster.

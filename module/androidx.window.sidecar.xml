@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <library name="com.oplus.consumerir.compat"
+        file="/system_ext/framework/coloros-ir-compat.jar" />
+    <library name="androidx.window.sidecar"
+        file="/system_ext/framework/androidx.window.sidecar.jar"
+        dependency="com.oplus.consumerir.compat" />
+</permissions>

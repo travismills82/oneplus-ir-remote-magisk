@@ -1,0 +1,5 @@
+*.apk
+*.zip
+*.zip.sha256
+__pycache__/
+dist/
