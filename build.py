@@ -13,6 +13,7 @@ from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parent
 MODULE = ROOT / "module"
+FIRMWARE_MEMBER = "/del-app/ConsumerIRApp/ConsumerIRApp.apk"
 
 
 def write_entry(archive, name, contents, compression=ZIP_DEFLATED):
@@ -64,19 +65,34 @@ def package(output, apk, d8, android_jar):
     print(f"{output}\n{checksum}")
 
 
+def read_firmware_apk(args):
+    if args.external_apk:
+        return None
+    if args.from_device:
+        command = ["adb", "-d", "exec-out", "cat", f"/my_product{FIRMWARE_MEMBER}"]
+    elif args.source.suffix == ".img":
+        command = ["dump.erofs", "--cat", f"--path={FIRMWARE_MEMBER}", args.source]
+    else:
+        return args.source.read_bytes()
+    return subprocess.run(command, stdout=subprocess.PIPE, check=True).stdout
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("apk", type=Path, nargs="?", help="original ConsumerIRApp.apk from ColorOS")
+    parser.add_argument("source", type=Path, nargs="?", help="original APK or extracted ColorOS my_product.img")
     parser.add_argument("output", type=Path, help="destination module ZIP")
-    parser.add_argument("--external-apk", action="store_true",
-                        help="use ConsumerIRApp.apk from the phone's Download folder at install time")
+    source_options = parser.add_mutually_exclusive_group()
+    source_options.add_argument("--external-apk", action="store_true",
+                                help="find the firmware APK at install time")
+    source_options.add_argument("--from-device", action="store_true",
+                                help="pull the APK from the connected ColorOS phone")
     parser.add_argument("--sdk", type=Path, default=os.getenv("ANDROID_HOME"))
     parser.add_argument("--build-tools", default="36.1.0", help="SDK build-tools version")
     args = parser.parse_args()
 
-    if args.external_apk == (args.apk is not None):
-        parser.error("provide either the original APK or --external-apk")
-    if args.output.suffix != ".zip" or (args.apk and args.output.resolve() == args.apk.resolve()):
+    if sum((args.source is not None, args.external_apk, args.from_device)) != 1:
+        parser.error("provide an APK or image, --from-device, or --external-apk")
+    if args.output.suffix != ".zip" or (args.source and args.output.resolve() == args.source.resolve()):
         parser.error("output must be a different file with a .zip extension")
     if args.sdk is None:
         parser.error("set ANDROID_HOME or pass --sdk")
@@ -88,9 +104,8 @@ def main():
             parser.error(f"missing {path}")
 
     try:
-        apk = None
-        if args.apk:
-            apk = args.apk.read_bytes()
+        apk = read_firmware_apk(args)
+        if apk is not None:
             expected = (ROOT / "source-apk.sha256").read_text().strip()
             if hashlib.sha256(apk).hexdigest() != expected:
                 parser.error("APK must be IR Remote 17.0.35 from CPH2747_17.0.1.201")

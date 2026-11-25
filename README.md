@@ -13,37 +13,29 @@ The OnePlus 15 LineageOS `infiniti` 24.0 nightly dated 2026-11-25 includes a Con
 
 ## Install the public test build
 
-Download the Magisk ZIP and checksum from [Releases](https://github.com/travismills82/oneplus-ir-remote-magisk/releases). The installer takes the original app from your firmware. While the phone is on ColorOS `CPH2747_17.0.1.201(EX01)`, save a copy of the APK.
-
-```sh
-adb pull /my_product/del-app/ConsumerIRApp/ConsumerIRApp.apk
-```
-
-If you already have the matching extracted `my_product.img`, you can extract the app using `dump.erofs` from erofs-utils.
-
-```sh
-dump.erofs --cat --path=/del-app/ConsumerIRApp/ConsumerIRApp.apk my_product.img > ConsumerIRApp.apk
-```
-
-1. Copy `ConsumerIRApp.apk` to **Internal storage → Download** on the target ROM. The installer checks it against the [firmware SHA-256](source-apk.sha256).
-2. In Magisk, open **Modules → Install from storage** and select the release ZIP.
+1. On the phone, download the [matching IR Remote 17.0.35 APK](https://www.apkmirror.com/apk/oneplus-ltd/ir-remote-2/ir-remote-17-0-35-release/ir-remote-17-0-35-android-apk-download/). Keep it in **Internal storage → Download** with its original filename. The installer locates the matching APK by its [firmware SHA-256](source-apk.sha256).
+2. Download the installer ZIP from [Releases](https://github.com/travismills82/oneplus-ir-remote-magisk/releases). In Magisk, open **Modules → Install from storage** and select that ZIP.
 3. Reboot and open **IR Remote** from the launcher.
 4. For the bundled catalogue, turn off **Obtain remote control data online** in the app's settings. Add a remote and test it with an appliance you control.
+
+For upgrades, the installer reuses the verified APK from an existing installation.
 
 To remove the port, select **Remove** on the Magisk module and reboot.
 
 Magisk mounts the firmware APK as a normal system app. The module adds a small Java class through the optional AndroidX Window Sidecar library that the app already requests. The ROM's Sidecar JAR and IR HAL are used as shipped. A boot check disables the module if a ROM update changes the underlying Sidecar registration.
 
-## Build
+## Build a self-contained ZIP
 
-Use Python 3, a JDK, and Android SDK Platform 36 with Build Tools 36.1.0.
+Use Python 3, a JDK, and Android SDK Platform 36 with Build Tools 36.1.0. Connect your OnePlus 15 running ColorOS `CPH2747_17.0.1.201(EX01)` with USB debugging enabled, then run:
 
 ```sh
-python3 build.py --external-apk dist/ColorOS-IR-Remote-Magisk-v1.0.0-installer.zip \
+python3 build.py --from-device dist/ColorOS-IR-Remote-Magisk-v1.0.1.zip \
   --sdk "$ANDROID_HOME"
 ```
 
-To build a local ZIP with the APK already bundled, pass `ConsumerIRApp.apk` as the first positional argument in place of `--external-apk`. Both builds write a checksum next to the ZIP.
+The builder pulls the original APK, checks the firmware hash, and bundles it. Install the resulting ZIP through Magisk and reboot. You can also pass an extracted APK or the matching `my_product.img` in place of `--from-device`. The image input uses `dump.erofs` from erofs-utils.
+
+Use `--external-apk` in place of `--from-device` to build the public installer. Both variants write a checksum next to the ZIP.
 
 ## Validation
 

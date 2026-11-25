@@ -6,6 +6,19 @@ install_path=/system/app/ColorOSIrRemote/ConsumerIRApp.apk
 sidecar_path=/system_ext/etc/permissions/androidx.window.sidecar.xml
 active_module=/data/adb/modules/oneplus_ir_remote
 
+find_firmware_apk() {
+  local candidate candidate_hash
+  for candidate in "$active_module$install_path" /data/media/0/Download/*.apk; do
+    [ -f "$candidate" ] && [ ! -L "$candidate" ] || continue
+    candidate_hash=$(sha256sum "$candidate" 2>/dev/null) || continue
+    if [ "${candidate_hash%% *}" = "$expected_hash" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
 [ "$BOOTMODE" = true ] || abort "! Install from the Magisk app after Android boots."
 [ "${API:-0}" -ge 35 ] || abort "! IR Remote 17.0.35 requires Android 15 or newer."
 case ",$(getprop ro.product.cpu.abilist)," in
@@ -52,16 +65,16 @@ framework_dir="$ext_dir/framework"
 ui_print "- Verifying the original OPlus-signed IR Remote APK"
 mkdir -p "$native_dir" "$permissions_dir" "$framework_dir" ||
   abort "! Could not create module directories."
+expected_hash=$(unzip -p "$ZIPFILE" apk.sha256) || abort "! The APK checksum is missing."
 if [ "$(unzip -p "$ZIPFILE" apk.source 2>/dev/null)" = external ]; then
-  source_apk=/data/media/0/Download/ConsumerIRApp.apk
-  [ -f "$source_apk" ] ||
-    abort "! Put the stock ConsumerIRApp.apk in the owner's internal storage Download folder."
-  cp "$source_apk" "$apk_path" || abort "! Could not read the APK from Download."
+  source_apk=$(find_firmware_apk) ||
+    abort "! Download the matching ColorOS IR Remote 17.0.35 APK to internal storage from the release instructions."
+  ui_print "- Using ${source_apk##*/}"
+  cp "$source_apk" "$apk_path" || abort "! Could not copy the firmware APK."
 else
   unzip -p "$ZIPFILE" payload/ConsumerIRApp.apk > "$apk_path" ||
     abort "! Could not extract ConsumerIRApp.apk."
 fi
-expected_hash=$(unzip -p "$ZIPFILE" apk.sha256) || abort "! The APK checksum is missing."
 actual_hash=$(sha256sum "$apk_path") || abort "! Could not hash the APK."
 [ "${actual_hash%% *}" = "$expected_hash" ] ||
   abort "! The APK must be IR Remote 17.0.35 from ColorOS CPH2747_17.0.1.201."
