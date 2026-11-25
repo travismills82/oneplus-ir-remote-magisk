@@ -13,12 +13,10 @@ The OnePlus 15 LineageOS `infiniti` 24.0 nightly dated 2026-11-25 includes a Con
 
 ## Install the public test build
 
-1. On the phone, download the [matching IR Remote 17.0.35 APK](https://www.apkmirror.com/apk/oneplus-ltd/ir-remote-2/ir-remote-17-0-35-release/ir-remote-17-0-35-android-apk-download/). Keep it in **Internal storage → Download** with its original filename. The installer locates the matching APK by its [firmware SHA-256](source-apk.sha256).
-2. Download the installer ZIP from [Releases](https://github.com/travismills82/oneplus-ir-remote-magisk/releases). In Magisk, open **Modules → Install from storage** and select that ZIP.
+1. Download [ColorOS IR Remote Magisk v1.0.2](https://github.com/travismills82/oneplus-ir-remote-magisk/releases/tag/v1.0.2). The ZIP contains the original OPlus-signed IR Remote 17.0.35 APK.
+2. In Magisk, open **Modules → Install from storage** and select the ZIP.
 3. Reboot and open **IR Remote** from the launcher.
 4. For the bundled catalogue, turn off **Obtain remote control data online** in the app's settings. Add a remote and test it with an appliance you control.
-
-For upgrades, the installer reuses the verified APK from an existing installation.
 
 To remove the port, select **Remove** on the Magisk module and reboot.
 
@@ -29,13 +27,13 @@ Magisk mounts the firmware APK as a normal system app. The module adds a small J
 Use Python 3, a JDK, and Android SDK Platform 36 with Build Tools 36.1.0. Connect your OnePlus 15 running ColorOS `CPH2747_17.0.1.201(EX01)` with USB debugging enabled, then run:
 
 ```sh
-python3 build.py --from-device dist/ColorOS-IR-Remote-Magisk-v1.0.1.zip \
+python3 build.py --from-device dist/ColorOS-IR-Remote-Magisk-v1.0.2.zip \
   --sdk "$ANDROID_HOME"
 ```
 
 The builder pulls the original APK, checks the firmware hash, and bundles it. Install the resulting ZIP through Magisk and reboot. You can also pass an extracted APK or the matching `my_product.img` in place of `--from-device`. The image input uses `dump.erofs` from erofs-utils.
 
-Use `--external-apk` in place of `--from-device` to build the public installer. Both variants write a checksum next to the ZIP.
+The builder writes a checksum next to the ZIP.
 
 ## Validation
 
