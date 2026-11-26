@@ -13,7 +13,7 @@ The OnePlus 15 LineageOS `infiniti` 24.0 nightly dated 2026-11-25 includes a Con
 
 ## Install the public test build
 
-1. Download [ColorOS IR Remote Magisk v1.0.2](https://github.com/travismills82/oneplus-ir-remote-magisk/releases/tag/v1.0.2). The ZIP contains the original OPlus-signed IR Remote 17.0.35 APK.
+1. Download [ColorOS IR Remote Magisk v1.0.3](https://github.com/travismills82/oneplus-ir-remote-magisk/releases/tag/v1.0.3). The ZIP contains the original OPlus-signed IR Remote 17.0.35 APK.
 2. In Magisk, open **Modules → Install from storage** and select the ZIP.
 3. Reboot and open **IR Remote** from the launcher.
 4. For the bundled catalogue, turn off **Obtain remote control data online** in the app's settings. Add a remote and test it with an appliance you control.
@@ -22,12 +22,14 @@ To remove the port, select **Remove** on the Magisk module and reboot.
 
 Magisk mounts the firmware APK as a normal system app. The module adds a small Java class through the optional AndroidX Window Sidecar library that the app already requests. The ROM's Sidecar JAR and IR HAL are used as shipped. A boot check disables the module if a ROM update changes the underlying Sidecar registration.
 
+On ROMs that ship `oplus-fwk.jar`, Android loads the ROM's OPlus class first. The module uses Android's package allowlist to let the original IR Remote app access that framework.
+
 ## Build a self-contained ZIP
 
 Use Python 3, a JDK, and Android SDK Platform 36 with Build Tools 36.1.0. Connect your OnePlus 15 running ColorOS `CPH2747_17.0.1.201(EX01)` with USB debugging enabled, then run:
 
 ```sh
-python3 build.py --from-device dist/ColorOS-IR-Remote-Magisk-v1.0.2.zip \
+python3 build.py --from-device dist/ColorOS-IR-Remote-Magisk-v1.0.3.zip \
   --sdk "$ANDROID_HOME"
 ```
 
@@ -39,4 +41,4 @@ The builder writes a checksum next to the ZIP.
 
 The v1.0.0 ZIP installed with Magisk 31.0 and booted on Android 16 and 17 emulators with SELinux enforcing. With networking disabled, the app loaded the bundled Samsung TV codes and sent a 37.94 kHz, 136-duration power pattern to the emulator's test Consumer IR service.
 
-The OnePlus 15 LineageOS 24.0 nightly dated 2026-11-25 was checked offline for the Sidecar registration, 4 KiB kernel, and IR stack. Physical appliance testing on LineageOS is pending.
+The bundled v1.0.3 ZIP installed and launched after reboot on a physical OnePlus 15 running LineageOS 24.0 nightly dated 2026-11-25. The Fire TV profile paired successfully, and volume and input controls worked on the TV.

@@ -86,6 +86,16 @@ unzip -oj "$ZIPFILE" payload/coloros-ir-compat.jar -d "$framework_dir" ||
   abort "! Could not extract the compatibility JAR."
 unzip -o "$ZIPFILE" androidx.window.sidecar.xml -d "$permissions_dir" ||
   abort "! Could not extract the Sidecar configuration."
+
+if [ -f /system/framework/oplus-fwk.jar ]; then
+  # The ROM's OPlus boot class takes precedence over the Sidecar fallback.
+  ui_print "- Enabling OPlus framework access for IR Remote"
+  sysconfig_dir="$MODPATH/system/etc/sysconfig"
+  mkdir -p "$sysconfig_dir" &&
+    unzip -o "$ZIPFILE" coloros-ir-remote-hidden-api.xml -d "$sysconfig_dir" ||
+    abort "! Could not configure IR Remote framework access."
+fi
+
 unzip -o "$ZIPFILE" module.prop post-fs-data.sh sidecar.sha256 -d "$MODPATH" ||
   abort "! Could not extract module metadata."
 

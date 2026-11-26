@@ -49,7 +49,8 @@ def package(output, apk, d8, android_jar):
         module_zip = work / "module.zip"
         with ZipFile(module_zip, "w") as archive:
             for name in ("module.prop", "customize.sh", "post-fs-data.sh",
-                         "androidx.window.sidecar.xml", "sidecar.sha256"):
+                         "androidx.window.sidecar.xml", "sidecar.sha256",
+                         "coloros-ir-remote-hidden-api.xml"):
                 write_entry(archive, name, (MODULE / name).read_bytes())
             write_entry(archive, "apk.sha256", (ROOT / "source-apk.sha256").read_bytes())
             if apk is None:
